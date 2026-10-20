@@ -1,0 +1,11 @@
+customer_id,first_name,last_name,email,country,created_at
+1,Rahul,Sharma,rahul.sharma@example.com,India,2026-10-20 06:08:18.428914
+2,Priya,Patel,priya.patel@example.com,India,2026-10-20 06:08:18.428914
+3,Arjun,Reddy,arjun.reddy@example.com,India,2026-10-20 06:08:18.428914
+4,Sneha,Iyer,sneha.iyer@example.com,India,2026-10-20 06:08:18.428914
+5,Amit,Kumar,amit.kumar@example.com,India,2026-10-20 06:08:18.428914
+6,Emma,Johnson,emma.johnson@example.com,USA,2026-10-20 06:08:18.428914
+7,Daniel,Smith,daniel.smith@example.com,USA,2026-10-20 06:08:18.428914
+8,Oliver,Brown,oliver.brown@example.com,UK,2026-10-20 06:08:18.428914
+9,Sophia,Wilson,sophia.wilson@example.com,UK,2026-10-20 06:08:18.428914
+10,Lucas,Martin,lucas.martin@example.com,France,2026-10-20 06:08:18.428914
