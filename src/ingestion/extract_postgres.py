@@ -34,11 +34,11 @@ TABLES = [
     "order_items",
     "payments",
 ]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-
-# Raw data directory
-RAW_DIR = Path("data/raw")
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
 RAW_DIR.mkdir(parents=True, exist_ok=True)
+
 
 
 def extract_table(table_name):
