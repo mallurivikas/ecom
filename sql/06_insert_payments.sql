@@ -1,0 +1,13 @@
+INSERT INTO payments
+    (order_id, payment_method, payment_status, amount, payment_date)
+VALUES
+    (1, 'UPI', 'SUCCESS', 87997.00, '2026-10-01 10:16:00'),
+    (2, 'CREDIT_CARD', 'SUCCESS', 34999.00, '2026-10-01 11:31:00'),
+    (3, 'UPI', 'SUCCESS', 15999.00, '2026-10-02 09:46:00'),
+    (4, 'CREDIT_CARD', 'REFUNDED', 7999.00, '2026-10-02 14:21:00'),
+    (5, 'DEBIT_CARD', 'SUCCESS', 11999.00, '2026-10-03 16:11:00'),
+    (6, 'UPI', 'PENDING', 12999.00, '2026-10-03 18:26:00'),
+    (7, 'CREDIT_CARD', 'SUCCESS', 114999.00, '2026-10-04 12:06:00'),
+    (8, 'UPI', 'SUCCESS', 4999.00, '2026-10-05 13:41:00'),
+    (9, 'CREDIT_CARD', 'SUCCESS', 15999.00, '2026-10-05 15:31:00'),
+    (10, 'UPI', 'SUCCESS', 3999.00, '2026-10-06 17:16:00');
