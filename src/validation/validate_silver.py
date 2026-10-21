@@ -389,18 +389,54 @@ def validate_table(
 
     print()
 
+def validate_order_totals(data):
+    """
+    Validate that each order's total_amount
+    matches the sum of its order items.
+    """
+
+    orders = data["orders"]
+    order_items = data["order_items"]
+
+    # Calculate the value of every order item
+    order_items = order_items.copy()
+
+    order_items["calculated_amount"] = (
+        order_items["quantity"]
+        * order_items["unit_price"]
+    )
+
+    # Calculate total value for each order
+    calculated_totals = (
+        order_items
+        .groupby("order_id")["calculated_amount"]
+        .sum()
+    )
+
+    # Compare calculated totals against orders.total_amount
+    for _, order in orders.iterrows():
+
+        order_id = order["order_id"]
+        expected_total = order["total_amount"]
+
+        calculated_total = calculated_totals.get(
+            order_id,
+            0
+        )
+
+        if calculated_total != expected_total:
+
+            raise ValueError(
+                f"orders: total_amount mismatch for "
+                f"order_id {order_id}.\n"
+                f"orders.total_amount = {expected_total}\n"
+                f"Calculated from order_items = "
+                f"{calculated_total}"
+            )
 
 def validate_all(data):
-    """
-    Validate all transformed DataFrames
-    before they are written to Silver.
-    """
 
     print("Validating tables...\n")
-
-    # -----------------------------------------
-    # Table-level validation
-    # -----------------------------------------
 
     for table_name, df in data.items():
 
@@ -408,15 +444,24 @@ def validate_all(data):
             table_name,
             df
         )
-
-    # -----------------------------------------
-    # Relationship validation
-    # -----------------------------------------
-
     print("Validating relationships...\n")
 
     validate_relationships(data)
 
     print(
-        "✓ All validation checks passed."
+        "✓ Relationships passed."
+    )
+
+    print(
+        "\nValidating business relationships...\n"
+    )
+
+    validate_order_totals(data)
+
+    print(
+        "✓ Order totals passed."
+    )
+
+    print(
+        "\n✓ All validation checks passed."
     )
