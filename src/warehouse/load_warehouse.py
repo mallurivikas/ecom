@@ -1,46 +1,66 @@
+import os
 from pathlib import Path
 
-import os
 import pandas as pd
-from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-GOLD_DIR = PROJECT_ROOT / "data" / "gold"
-
-load_dotenv(PROJECT_ROOT / ".env")
-
+load_dotenv()
 
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-WAREHOUSE_DB = "ecommerce_dw"
+DB_NAME = "ecommerce_dw"
 
-DATABASE_URL = (
-    f"postgresql+psycopg://"
-    f"{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{WAREHOUSE_DB}"
+DB_URL = (
+    f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DB_URL)
+
+GOLD_DIR = Path("data/gold")
+
+def get_watermark(pipeline_name):
+    query = text("""
+        SELECT last_watermark
+        FROM pipeline_metadata
+        WHERE pipeline_name = :pipeline_name
+    """)
+
+    with engine.connect() as connection:
+        return connection.execute(
+            query,
+            {"pipeline_name": pipeline_name}
+        ).scalar()
 
 
-TABLES = [
-    "dim_customers",
-    "dim_products",
-    "fact_orders",
-    "fact_order_items",
-]
+def update_watermark(pipeline_name, new_watermark):
+    query = text("""
+        UPDATE pipeline_metadata
+        SET last_watermark = :new_watermark
+        WHERE pipeline_name = :pipeline_name
+    """)
+
+    with engine.begin() as connection:
+        connection.execute(
+            query,
+            {
+                "pipeline_name": pipeline_name,
+                "new_watermark": new_watermark
+            }
+        )
 
 
-def prepare_table(table_name, df):
+def prepare_table(df, table_name):
     if table_name == "dim_customers":
         df["customer_id"] = pd.to_numeric(
             df["customer_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["created_at"] = pd.to_datetime(
             df["created_at"], errors="raise"
         )
@@ -48,10 +68,12 @@ def prepare_table(table_name, df):
     elif table_name == "dim_products":
         df["product_id"] = pd.to_numeric(
             df["product_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["price"] = pd.to_numeric(
             df["price"], errors="raise"
         )
+
         df["created_at"] = pd.to_datetime(
             df["created_at"], errors="raise"
         )
@@ -59,39 +81,49 @@ def prepare_table(table_name, df):
     elif table_name == "fact_orders":
         df["order_id"] = pd.to_numeric(
             df["order_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["customer_id"] = pd.to_numeric(
             df["customer_id"], errors="raise"
-        )
-        df["order_date"] = pd.to_datetime(
-            df["order_date"], errors="raise"
-        )
+        ).astype("int64")
+
         df["total_amount"] = pd.to_numeric(
             df["total_amount"], errors="raise"
         )
+
         df["item_count"] = pd.to_numeric(
             df["item_count"], errors="raise"
-        )
+        ).astype("int64")
+
         df["total_quantity"] = pd.to_numeric(
             df["total_quantity"], errors="raise"
+        ).astype("int64")
+
+        df["order_date"] = pd.to_datetime(
+            df["order_date"], errors="raise"
         )
 
     elif table_name == "fact_order_items":
         df["order_item_id"] = pd.to_numeric(
             df["order_item_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["order_id"] = pd.to_numeric(
             df["order_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["product_id"] = pd.to_numeric(
             df["product_id"], errors="raise"
-        )
+        ).astype("int64")
+
         df["quantity"] = pd.to_numeric(
             df["quantity"], errors="raise"
-        )
+        ).astype("int64")
+
         df["unit_price"] = pd.to_numeric(
             df["unit_price"], errors="raise"
         )
+
         df["item_total"] = pd.to_numeric(
             df["item_total"], errors="raise"
         )
@@ -126,10 +158,11 @@ def load_dim_customers(df):
             created_at = EXCLUDED.created_at
     """)
 
-    records = df.to_dict(orient="records")
-
     with engine.begin() as connection:
-        connection.execute(query, records)
+        connection.execute(
+            query,
+            df.to_dict(orient="records")
+        )
 
     print(f"  Rows processed: {len(df)}")
 
@@ -158,15 +191,30 @@ def load_dim_products(df):
             created_at = EXCLUDED.created_at
     """)
 
-    records = df.to_dict(orient="records")
-
     with engine.begin() as connection:
-        connection.execute(query, records)
+        connection.execute(
+            query,
+            df.to_dict(orient="records")
+        )
 
     print(f"  Rows processed: {len(df)}")
 
 
-def load_fact_orders(df):
+def get_incremental_orders(df):
+    watermark = get_watermark("fact_orders_load")
+
+    print(f"  Current watermark: {watermark}")
+
+    new_orders = df[
+        df["order_date"] > watermark
+    ].copy()
+
+    print(f"  Rows after incremental filter: {len(new_orders)}")
+
+    return new_orders
+
+
+def load_fact_orders(connection, df):
     query = text("""
         INSERT INTO fact_orders (
             order_id,
@@ -196,15 +244,29 @@ def load_fact_orders(df):
             total_quantity = EXCLUDED.total_quantity
     """)
 
-    records = df.to_dict(orient="records")
+    if df.empty:
+        print("  No new orders to load.")
+        return
 
-    with engine.begin() as connection:
-        connection.execute(query, records)
+    connection.execute(
+        query,
+        df.to_dict(orient="records")
+    )
 
-    print(f"  Rows processed: {len(df)}")
+    print(f"  Rows loaded: {len(df)}")
 
 
-def load_fact_order_items(df):
+def load_fact_order_items(connection, df, order_ids):
+    new_items = df[
+        df["order_id"].isin(order_ids)
+    ].copy()
+
+    print(f"  Rows after incremental filter: {len(new_items)}")
+
+    if new_items.empty:
+        print("  No new order items to load.")
+        return
+
     query = text("""
         INSERT INTO fact_order_items (
             order_item_id,
@@ -231,76 +293,113 @@ def load_fact_order_items(df):
             item_total = EXCLUDED.item_total
     """)
 
-    records = df.to_dict(orient="records")
-
-    with engine.begin() as connection:
-        connection.execute(query, records)
-
-    print(f"  Rows processed: {len(df)}")
-
-
-def load_table(table_name):
-    input_file = GOLD_DIR / f"{table_name}.csv"
-
-    print(f"Loading {table_name}...")
-    print(f"  Source: {input_file}")
-
-    df = pd.read_csv(input_file)
-
-    print(f"  Rows read: {len(df)}")
-
-    df = prepare_table(table_name, df)
-
-    print("  Data types prepared:")
-    print(df.dtypes)
-
-    if table_name == "dim_customers":
-        load_dim_customers(df)
-
-    elif table_name == "dim_products":
-        load_dim_products(df)
-
-    elif table_name == "fact_orders":
-        load_fact_orders(df)
-
-    elif table_name == "fact_order_items":
-        load_fact_order_items(df)
-
-    print()
-
-
-def verify_table(table_name):
-    query = text(
-        f"SELECT COUNT(*) FROM {table_name}"
+    connection.execute(
+        query,
+        new_items.to_dict(orient="records")
     )
 
-    with engine.connect() as connection:
-        count = connection.execute(query).scalar()
+    print(f"  Rows loaded: {len(new_items)}")
 
-    print(f"  {table_name}: {count} rows")
+
+def verify_warehouse():
+    tables = [
+        "dim_customers",
+        "dim_products",
+        "fact_orders",
+        "fact_order_items"
+    ]
+
+    for table in tables:
+        query = text(f"SELECT COUNT(*) FROM {table}")
+
+        with engine.connect() as connection:
+            count = connection.execute(query).scalar()
+
+        print(f"  {table}: {count} rows")
 
 
 def main():
-    print("=" * 60)
     print("STARTING GOLD → DATA WAREHOUSE LOAD")
-    print("=" * 60)
-    print()
 
-    for table in TABLES:
-        load_table(table)
+    customers = pd.read_csv(
+        GOLD_DIR / "dim_customers.csv"
+    )
+    customers = prepare_table(
+        customers,
+        "dim_customers"
+    )
 
-    print("=" * 60)
-    print("VERIFYING WAREHOUSE")
-    print("=" * 60)
-    print()
+    print("\nLoading dim_customers...")
+    print(f"  Rows read: {len(customers)}")
+    load_dim_customers(customers)
 
-    for table in TABLES:
-        verify_table(table)
+    products = pd.read_csv(
+        GOLD_DIR / "dim_products.csv"
+    )
+    products = prepare_table(
+        products,
+        "dim_products"
+    )
 
-    print()
-    print("=" * 60)
+    print("\nLoading dim_products...")
+    print(f"  Rows read: {len(products)}")
+    load_dim_products(products)
+
+    orders = pd.read_csv(
+        GOLD_DIR / "fact_orders.csv"
+    )
+    orders = prepare_table(
+        orders,
+        "fact_orders"
+    )
+
+    print("\nLoading fact_orders...")
+    print(f"  Rows read: {len(orders)}")
+
+    new_orders = get_incremental_orders(orders)
+
+    items = pd.read_csv(
+        GOLD_DIR / "fact_order_items.csv"
+    )
+    items = prepare_table(
+        items,
+        "fact_order_items"
+    )
+
+    print("\nLoading fact_order_items...")
+    print(f"  Rows read: {len(items)}")
+
+    new_order_ids = new_orders["order_id"].tolist()
+
+    new_watermark = (
+        new_orders["order_date"].max()
+        if not new_orders.empty
+        else None
+    )
+
+    with engine.begin() as connection:
+        load_fact_orders(
+            connection,
+            new_orders
+        )
+
+        load_fact_order_items(
+            connection,
+            items,
+            new_order_ids
+        )
+
+    if new_watermark is not None:
+        update_watermark(
+            "fact_orders_load",
+            new_watermark
+        )
+        print(f"  Watermark updated to: {new_watermark}")
+
+    print("\nVERIFYING WAREHOUSE")
+    verify_warehouse()
+
     print("WAREHOUSE LOAD COMPLETED")
-    print("=" * 60)
 
 
 if __name__ == "__main__":
