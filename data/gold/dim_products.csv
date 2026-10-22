@@ -1,0 +1,16 @@
+product_id,product_name,category,price,created_at
+1,iPhone 16,Electronics,79999.0,2026-10-20 06:10:32.436601
+2,Samsung Galaxy S25,Electronics,74999.0,2026-10-20 06:10:32.436601
+3,Sony WH-1000XM6,Electronics,34999.0,2026-10-20 06:10:32.436601
+4,MacBook Air M4,Electronics,114999.0,2026-10-20 06:10:32.436601
+5,Dell XPS 14,Electronics,129999.0,2026-10-20 06:10:32.436601
+6,Nike Air Max,Footwear,12999.0,2026-10-20 06:10:32.436601
+7,Adidas Ultraboost,Footwear,15999.0,2026-10-20 06:10:32.436601
+8,Levis 501 Jeans,Clothing,4999.0,2026-10-20 06:10:32.436601
+9,Puma T-Shirt,Clothing,1999.0,2026-10-20 06:10:32.436601
+10,The North Face Jacket,Clothing,12999.0,2026-10-20 06:10:32.436601
+11,Coffee Maker,Home,8999.0,2026-10-20 06:10:32.436601
+12,Air Fryer,Home,11999.0,2026-10-20 06:10:32.436601
+13,Mechanical Keyboard,Accessories,7999.0,2026-10-20 06:10:32.436601
+14,Wireless Mouse,Accessories,2499.0,2026-10-20 06:10:32.436601
+15,USB-C Hub,Accessories,3999.0,2026-10-20 06:10:32.436601
