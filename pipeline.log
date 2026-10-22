@@ -1,0 +1,188 @@
+Starting PostgreSQL extraction...
+
+Extracting customers...
+  Rows extracted: 10
+  Saved to: /home/mallurivikas/Desktop/ecom/data/raw/customers.csv
+Extracting products...
+  Rows extracted: 15
+  Saved to: /home/mallurivikas/Desktop/ecom/data/raw/products.csv
+Extracting orders...
+  Rows extracted: 14
+  Saved to: /home/mallurivikas/Desktop/ecom/data/raw/orders.csv
+Extracting order_items...
+  Rows extracted: 16
+  Saved to: /home/mallurivikas/Desktop/ecom/data/raw/order_items.csv
+Extracting payments...
+  Rows extracted: 14
+  Saved to: /home/mallurivikas/Desktop/ecom/data/raw/payments.csv
+
+Extraction completed successfully.
+/home/mallurivikas/Desktop/ecom/src/transformation/transform_silver.py:44: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2 and 3.
+  for column in df.select_dtypes(include=["object"]).columns:
+/home/mallurivikas/Desktop/ecom/src/transformation/transform_silver.py:44: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2 and 3.
+  for column in df.select_dtypes(include=["object"]).columns:
+/home/mallurivikas/Desktop/ecom/src/transformation/transform_silver.py:44: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2 and 3.
+  for column in df.select_dtypes(include=["object"]).columns:
+/home/mallurivikas/Desktop/ecom/src/transformation/transform_silver.py:44: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2 and 3.
+  for column in df.select_dtypes(include=["object"]).columns:
+============================================================
+STARTING TRANSFORMATION + VALIDATION
+============================================================
+
+Transforming customers...
+  Input rows: 10
+  Transformed rows: 10
+
+Transforming products...
+  Input rows: 15
+  Transformed rows: 15
+
+Transforming orders...
+  Input rows: 14
+  Transformed rows: 14
+
+Transforming order_items...
+  Input rows: 16
+  Transformed rows: 16
+
+Transforming payments...
+  Input rows: 14
+  Transformed rows: 14
+
+============================================================
+STARTING VALIDATION
+============================================================
+
+Validating tables...
+
+Validating customers...
+  ✓ customers passed table validation
+  Rows: 10
+
+Validating products...
+  ✓ products passed table validation
+  Rows: 15
+
+Validating orders...
+  ✓ orders passed table validation
+  Rows: 14
+
+Validating order_items...
+  ✓ order_items passed table validation
+  Rows: 16
+
+Validating payments...
+  ✓ payments passed table validation
+  Rows: 14
+
+Validating relationships...
+
+✓ Relationships passed.
+
+Validating business relationships...
+
+✓ Order totals passed.
+
+✓ All validation checks passed.
+
+============================================================
+VALIDATION PASSED
+============================================================
+
+Writing Silver files...
+
+  Saved: /home/mallurivikas/Desktop/ecom/data/silver/customers.csv
+  Saved: /home/mallurivikas/Desktop/ecom/data/silver/products.csv
+  Saved: /home/mallurivikas/Desktop/ecom/data/silver/orders.csv
+  Saved: /home/mallurivikas/Desktop/ecom/data/silver/order_items.csv
+  Saved: /home/mallurivikas/Desktop/ecom/data/silver/payments.csv
+
+============================================================
+PIPELINE COMPLETED SUCCESSFULLY
+============================================================
+============================================================
+STARTING GOLD TRANSFORMATION
+============================================================
+
+Loading customers...
+  Rows: 10
+Loading products...
+  Rows: 15
+Loading orders...
+  Rows: 14
+Loading order_items...
+  Rows: 16
+
+============================================================
+CREATING GOLD TABLES
+============================================================
+
+Gold table summary:
+
+dim_customers: 10 rows
+dim_products: 15 rows
+fact_orders: 14 rows
+fact_order_items: 16 rows
+
+============================================================
+VALIDATING GOLD
+============================================================
+
+All Gold validations passed.
+
+============================================================
+GOLD VALIDATION PASSED
+============================================================
+
+Writing Gold files...
+
+Saved: /home/mallurivikas/Desktop/ecom/data/gold/dim_customers.csv
+Saved: /home/mallurivikas/Desktop/ecom/data/gold/dim_products.csv
+Saved: /home/mallurivikas/Desktop/ecom/data/gold/fact_orders.csv
+Saved: /home/mallurivikas/Desktop/ecom/data/gold/fact_order_items.csv
+
+============================================================
+GOLD TRANSFORMATION COMPLETED
+============================================================
+STARTING GOLD → DATA WAREHOUSE LOAD
+
+Loading dim_customers...
+  Rows read: 10
+  Rows processed: 10
+
+Loading dim_products...
+  Rows read: 15
+  Rows processed: 15
+
+Loading fact_orders...
+  Rows read: 14
+  Current watermark: 2026-10-10 11:30:00
+  Rows after incremental filter: 0
+
+Loading fact_order_items...
+  Rows read: 16
+  No new orders to load.
+  Rows after incremental filter: 0
+  No new order items to load.
+
+VERIFYING WAREHOUSE
+  dim_customers: 10 rows
+  dim_products: 15 rows
+  fact_orders: 14 rows
+  fact_order_items: 16 rows
+WAREHOUSE LOAD COMPLETED
+STARTING ECOM PIPELINE
+
+Running: python -m src.ingestion.extract_postgres
+
+Running: python -m src.transformation.transform_silver
+
+Running: python -m src.transformation.transform_gold
+
+Running: python -m src.warehouse.load_warehouse
+
+ECOM PIPELINE COMPLETED
