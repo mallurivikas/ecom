@@ -45,3 +45,8 @@ CREATE TABLE IF NOT EXISTS fact_order_items (
         FOREIGN KEY (product_id)
         REFERENCES dim_products(product_id)
 );
+
+CREATE TABLE IF NOT EXISTS pipeline_metadata (
+    pipeline_name VARCHAR(100) PRIMARY KEY,
+    last_watermark TIMESTAMP
+);

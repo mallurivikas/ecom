@@ -99,6 +99,146 @@ def prepare_table(table_name, df):
     return df
 
 
+def load_dim_customers(df):
+    query = text("""
+        INSERT INTO dim_customers (
+            customer_id,
+            first_name,
+            last_name,
+            email,
+            country,
+            created_at
+        )
+        VALUES (
+            :customer_id,
+            :first_name,
+            :last_name,
+            :email,
+            :country,
+            :created_at
+        )
+        ON CONFLICT (customer_id)
+        DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            email = EXCLUDED.email,
+            country = EXCLUDED.country,
+            created_at = EXCLUDED.created_at
+    """)
+
+    records = df.to_dict(orient="records")
+
+    with engine.begin() as connection:
+        connection.execute(query, records)
+
+    print(f"  Rows processed: {len(df)}")
+
+
+def load_dim_products(df):
+    query = text("""
+        INSERT INTO dim_products (
+            product_id,
+            product_name,
+            category,
+            price,
+            created_at
+        )
+        VALUES (
+            :product_id,
+            :product_name,
+            :category,
+            :price,
+            :created_at
+        )
+        ON CONFLICT (product_id)
+        DO UPDATE SET
+            product_name = EXCLUDED.product_name,
+            category = EXCLUDED.category,
+            price = EXCLUDED.price,
+            created_at = EXCLUDED.created_at
+    """)
+
+    records = df.to_dict(orient="records")
+
+    with engine.begin() as connection:
+        connection.execute(query, records)
+
+    print(f"  Rows processed: {len(df)}")
+
+
+def load_fact_orders(df):
+    query = text("""
+        INSERT INTO fact_orders (
+            order_id,
+            customer_id,
+            order_date,
+            status,
+            total_amount,
+            item_count,
+            total_quantity
+        )
+        VALUES (
+            :order_id,
+            :customer_id,
+            :order_date,
+            :status,
+            :total_amount,
+            :item_count,
+            :total_quantity
+        )
+        ON CONFLICT (order_id)
+        DO UPDATE SET
+            customer_id = EXCLUDED.customer_id,
+            order_date = EXCLUDED.order_date,
+            status = EXCLUDED.status,
+            total_amount = EXCLUDED.total_amount,
+            item_count = EXCLUDED.item_count,
+            total_quantity = EXCLUDED.total_quantity
+    """)
+
+    records = df.to_dict(orient="records")
+
+    with engine.begin() as connection:
+        connection.execute(query, records)
+
+    print(f"  Rows processed: {len(df)}")
+
+
+def load_fact_order_items(df):
+    query = text("""
+        INSERT INTO fact_order_items (
+            order_item_id,
+            order_id,
+            product_id,
+            quantity,
+            unit_price,
+            item_total
+        )
+        VALUES (
+            :order_item_id,
+            :order_id,
+            :product_id,
+            :quantity,
+            :unit_price,
+            :item_total
+        )
+        ON CONFLICT (order_item_id)
+        DO UPDATE SET
+            order_id = EXCLUDED.order_id,
+            product_id = EXCLUDED.product_id,
+            quantity = EXCLUDED.quantity,
+            unit_price = EXCLUDED.unit_price,
+            item_total = EXCLUDED.item_total
+    """)
+
+    records = df.to_dict(orient="records")
+
+    with engine.begin() as connection:
+        connection.execute(query, records)
+
+    print(f"  Rows processed: {len(df)}")
+
+
 def load_table(table_name):
     input_file = GOLD_DIR / f"{table_name}.csv"
 
@@ -114,14 +254,18 @@ def load_table(table_name):
     print("  Data types prepared:")
     print(df.dtypes)
 
-    df.to_sql(
-        table_name,
-        engine,
-        if_exists="append",
-        index=False,
-    )
+    if table_name == "dim_customers":
+        load_dim_customers(df)
 
-    print(f"  Rows loaded: {len(df)}")
+    elif table_name == "dim_products":
+        load_dim_products(df)
+
+    elif table_name == "fact_orders":
+        load_fact_orders(df)
+
+    elif table_name == "fact_order_items":
+        load_fact_order_items(df)
+
     print()
 
 
